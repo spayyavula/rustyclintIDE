@@ -491,7 +491,6 @@ const GitHubSearchDownload: React.FC<GitHubSearchDownloadProps> = ({ onRepoSelec
       </div>
     </div>
   );
-  );
 };
 
 export default GitHubSearchDownload;
