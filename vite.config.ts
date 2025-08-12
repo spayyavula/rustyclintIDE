@@ -72,6 +72,7 @@ export default defineConfig(({ command }) => ({
       overlay: true,
       timeout: 30000, // Lowered timeout for faster feedback
       port: 24678,
+      clientPort: 443,
     },
     headers: {
       'Cache-Control': 'no-cache', // Disable caching in development
