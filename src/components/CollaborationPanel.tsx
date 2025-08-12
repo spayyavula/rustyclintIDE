@@ -169,7 +169,8 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
 
     const connectWebSocket = () => {
       try {
-        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3002';
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
         const websocket = new WebSocket(wsUrl);
         
         websocket.onopen = () => {

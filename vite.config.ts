@@ -66,6 +66,13 @@ export default defineConfig(({ command }) => ({
     fs: {
       strict: false,
     },
+    proxy: {
+      '/ws': {
+        target: 'ws://localhost:3002',
+        ws: true,
+        changeOrigin: true
+      }
+    },
     // Disable preload in development
     preTransformRequests: false,
     hmr: {
