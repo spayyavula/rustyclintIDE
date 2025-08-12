@@ -356,14 +356,238 @@ function App() {
 
   // File open handler (expects filePath: string)
   const handleFileOpen = async (filePath: string) => {
-    // Fetch file data from backend or cache using filePath
-    const res = await fetch(`/api/file?path=${encodeURIComponent(filePath)}`);
-    if (!res.ok) return;
-    const file = await res.json(); // { id, name, content, language }
-    if (!tabs.some(tab => tab.id === file.id)) {
-      setTabs([...tabs, { ...file, isDirty: false }]);
+    // Create a new tab for the selected file
+    const fileName = filePath.split('/').pop() || filePath;
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
+    
+    // Determine language based on file extension
+    const getLanguage = (ext: string) => {
+      switch (ext) {
+        case 'rs': return 'rust';
+        case 'kt': return 'kotlin';
+        case 'java': return 'java';
+        case 'dart': return 'dart';
+        case 'swift': return 'swift';
+        case 'js': case 'jsx': return 'javascript';
+        case 'ts': case 'tsx': return 'typescript';
+        case 'py': return 'python';
+        case 'xml': return 'xml';
+        case 'json': return 'json';
+        case 'toml': return 'toml';
+        case 'gradle': return 'gradle';
+        case 'md': return 'markdown';
+        default: return 'plaintext';
+      }
+    };
+    
+    // Generate sample content based on file type
+    const getSampleContent = (fileName: string, language: string) => {
+      if (fileName === 'MainActivity.kt') {
+        return `package com.rustyclint.helloworld
+
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.widget.TextView
+
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        
+        // Find the TextView and set a dynamic message
+        val messageTextView = findViewById<TextView>(R.id.messageTextView)
+        messageTextView.text = "Hello World from rustyclint!"
     }
-    setActiveTab(String(file.id));
+}`;
+      } else if (fileName === 'main.rs') {
+        return `use std::collections::HashMap;
+
+fn main() {
+    println!("Welcome to rustyclint!");
+    
+    let mut config = HashMap::new();
+    config.insert("platform", "mobile");
+    config.insert("target", "android");
+    
+    initialize_app(config);
+}
+
+fn initialize_app(config: HashMap<&str, &str>) {
+    println!("Initializing app with config: {:?}", config);
+    // App initialization logic here
+}`;
+      } else if (fileName === 'lib.rs') {
+        return `//! rustyclint mobile library
+//! 
+//! This library provides core functionality for mobile app development
+//! with Rust, including platform-specific optimizations and security features.
+
+pub mod mobile_utils;
+pub mod platform;
+pub mod ui;
+
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
+
+/// Initialize the rustyclint mobile library
+#[no_mangle]
+pub extern "C" fn rustyclint_init() -> bool {
+    println!("rustyclint mobile library initialized");
+    true
+}
+
+/// Process data with high performance
+#[no_mangle]
+pub extern "C" fn process_data(input: *const c_char) -> *mut c_char {
+    let c_str = unsafe { CStr::from_ptr(input) };
+    let input_str = c_str.to_str().unwrap_or("");
+    
+    let result = format!("Processed: {}", input_str);
+    let c_string = CString::new(result).unwrap();
+    c_string.into_raw()
+}`;
+      } else if (language === 'dart') {
+        return `import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'rustyclint Mobile',
+      theme: ThemeData(
+        primarySwatch: Colors.orange,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: MyHomePage(title: 'rustyclint Mobile App'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  MyHomePage({Key? key, required this.title}) : super(key: key);
+  final String title;
+
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
+
+  void _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              'You have pushed the button this many times:',
+            ),
+            Text(
+              '$_counter',
+              style: Theme.of(context).textTheme.headline4,
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+}`;
+      } else if (language === 'xml') {
+        return `<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1F2937"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/titleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello World!"
+        android:textColor="#FFFFFF"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/messageTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/messageTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome to your first Android app!"
+        android:textColor="#E5E7EB"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/titleTextView" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>`;
+      } else if (language === 'toml') {
+        return `[package]
+name = "rustyclint"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rustyclint"
+crate-type = ["staticlib", "cdylib"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.19.0"
+
+[target.'cfg(target_os = "ios")'.dependencies]
+objc = "0.2"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1`;
+      }
+      return `// ${fileName}\n// Add your code here...`;
+    };
+    
+    const newTab = {
+      id: filePath,
+      name: fileName,
+      content: getSampleContent(fileName, getLanguage(fileExtension)),
+      language: getLanguage(fileExtension),
+      isDirty: false
+    };
+    
+    if (!tabs.some(tab => tab.id === filePath)) {
+      setTabs([...tabs, newTab]);
+    }
+    setActiveTab(filePath);
   };
 
   // Code change handler

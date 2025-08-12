@@ -250,8 +250,33 @@ const FileExplorer: React.FC<FileExplorerProps> = ({ onFileSelect, selectedFile 
   const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
-    // TODO: Implement upload logic here, e.g., send files to backend or update fileTree state
-    alert(`${files.length} file(s) selected for upload (upload logic not implemented).`);
+    
+    // Process uploaded files and add them to the file tree
+    const newFiles: FileNode[] = [];
+    
+    Array.from(files).forEach(file => {
+      const pathParts = file.webkitRelativePath ? file.webkitRelativePath.split('/') : [file.name];
+      
+      // Create file node
+      const fileNode: FileNode = {
+        name: pathParts[pathParts.length - 1],
+        type: 'file'
+      };
+      
+      newFiles.push(fileNode);
+    });
+    
+    // Update file tree with new files
+    setFileTree(prev => {
+      const updated = [...prev];
+      if (updated.length > 0 && updated[0].children) {
+        // Add to the first project folder
+        updated[0].children.push(...newFiles);
+      }
+      return updated;
+    });
+    
+    console.log(`${files.length} file(s) uploaded successfully`);
     // Optionally, refresh file tree after upload
     // refreshFileTree();
   };
