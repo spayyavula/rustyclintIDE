@@ -57,6 +57,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
   const [activeTab, setActiveTab] = useState<'chat' | 'users' | 'voice'>('chat');
   const [message, setMessage] = useState('');
   const [isConnected, setIsConnected] = useState(true);
+  const [ws, setWs] = useState<WebSocket | null>(null);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
@@ -162,6 +163,61 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // WebSocket connection management
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const connectWebSocket = () => {
+      try {
+        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3002';
+        const websocket = new WebSocket(wsUrl);
+        
+        websocket.onopen = () => {
+          console.log('WebSocket connected');
+          setIsConnected(true);
+          setWs(websocket);
+        };
+        
+        websocket.onclose = () => {
+          console.log('WebSocket disconnected');
+          setIsConnected(false);
+          setWs(null);
+        };
+        
+        websocket.onerror = (error) => {
+          console.log('WebSocket connection failed, running in offline mode');
+          setIsConnected(false);
+          setWs(null);
+        };
+        
+        websocket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'chat_message') {
+              setMessages(prev => [...prev, data.message]);
+            }
+          } catch (error) {
+            console.error('WebSocket message error:', error);
+          }
+        };
+        
+        return websocket;
+      } catch (error) {
+        console.log('WebSocket not available, running in offline mode');
+        setIsConnected(false);
+        return null;
+      }
+    };
+
+    const websocket = connectWebSocket();
+    
+    return () => {
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.close();
+      }
+    };
+  }, [isVisible]);
+
   const sendMessage = () => {
     if (!message.trim()) return;
 
@@ -175,6 +231,15 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
     };
 
     setMessages(prev => [...prev, newMessage]);
+    
+    // Send via WebSocket if connected
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'chat_message',
+        message: newMessage
+      }));
+    }
+    
     setMessage('');
   };
 

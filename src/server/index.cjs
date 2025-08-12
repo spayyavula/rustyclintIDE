@@ -4,11 +4,14 @@ const cors = require('cors');
 const AdmZip = require('adm-zip');
 const fs = require('fs/promises');
 const fetch = require('node-fetch');
+const WebSocket = require('ws');
+const http = require('http');
 const fileTreeRouter = require('../api/file-tree.cjs');
 const uploadRouter = require('../api/upload.cjs');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const WS_PORT = process.env.WS_PORT || 3002;
 
 app.use(cors());
 app.use(express.json());
@@ -60,4 +63,38 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Node server running on http://localhost:${PORT}`);
+});
+
+// Create WebSocket server
+const server = http.createServer();
+const wss = new WebSocket.Server({ server });
+
+wss.on('connection', (ws) => {
+  console.log('WebSocket client connected');
+  
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message.toString());
+      // Broadcast to all connected clients
+      wss.clients.forEach((client) => {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(data));
+        }
+      });
+    } catch (error) {
+      console.error('WebSocket message error:', error);
+    }
+  });
+  
+  ws.on('close', () => {
+    console.log('WebSocket client disconnected');
+  });
+  
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+  });
+});
+
+server.listen(WS_PORT, () => {
+  console.log(`WebSocket server running on ws://localhost:${WS_PORT}`);
 });
