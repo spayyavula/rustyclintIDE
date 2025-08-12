@@ -25,6 +25,7 @@
     "@stripe/stripe-js": "^5.0.0",
     "@supabase/supabase-js": "^2.39.8",
     "adm-zip": "^0.5.16",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "fs-extra": "^11.3.0",
     "localforage": "^1.10.0",
