@@ -15,8 +15,8 @@ const WS_PORT = process.env.WS_PORT || 3002;
 
 app.use(cors());
 app.use(express.json());
-app.use(fileTreeRouter);
-app.use(uploadRouter);
+app.use('/api', fileTreeRouter);
+app.use('/api', uploadRouter);
 
 // Download and extract a GitHub repo (moved from download-repo.ts and downloadAndExtractRepo.ts)
 async function downloadAndExtractRepo(owner, repo, branch = 'main', workspaceDir) {

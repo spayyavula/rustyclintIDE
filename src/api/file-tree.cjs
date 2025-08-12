@@ -27,7 +27,7 @@ async function getFileTree(dir) {
 }
 
 // GET /api/file-tree
-router.get('/api/file-tree', async (req, res) => {
+router.get('/file-tree', async (req, res) => {
   try {
     const tree = await getFileTree(WORKSPACE_DIR);
     res.json(tree);

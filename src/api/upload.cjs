@@ -8,7 +8,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const WORKSPACE_DIR = path.resolve(__dirname, '../../workspace');
 
-router.post('/api/upload', upload.array('files'), async (req, res) => {
+router.post('/upload', upload.array('files'), async (req, res) => {
   try {
     for (const file of req.files) {
       const dest = path.join(WORKSPACE_DIR, file.originalname);
