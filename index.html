@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="rustyclint - A powerful cloud-based linting and code analysis platform" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🦀%3C/text%3E%3C/svg%3E" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rustyclint Interface</title>
+    <!-- Preconnect for fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <link rel="dns-prefetch" href="https://rcyodojklxpyfjepqqqw.supabase.co">
+    <link rel="preconnect" href="https://rcyodojklxpyfjepqqqw.supabase.co" crossorigin>
+    
+    <!-- PWA support -->
+   <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1F2937">
+    
+    <!-- Critical CSS inline -->
+    <style>
+      /* Critical CSS for initial render */
+      body {
+        background-color: #111827;
+        color: #f9fafb;
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      #root {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #3b82f6;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Initial loading state -->
+      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Performance mark for initial load -->
+    <script>
+      // Aggressively prevent preload links in development to avoid console warnings
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // Suppress workbox logging in development
+        if (window.console && window.console.log) {
+          const originalLog = window.console.log;
+          const originalWarn = window.console.warn;
+          
+          window.console.log = function(...args) {
+            const message = args.join(' ');
+            // Suppress workbox and preload related messages
+            if (message.includes('workbox') || 
+                message.includes('preload') || 
+                message.includes('modulepreload') ||
+                message.includes('Router is responding') ||
+                message.includes('Found a cached response')) {
+              return;
+            }
+            return originalLog.apply(this, args);
+          };
+          
+          window.console.warn = function(...args) {
+            const message = args.join(' ');
+            // Suppress preload warnings
+            if (message.includes('preload') || message.includes('modulepreload')) {
+              return;
+            }
+            return originalWarn.apply(this, args);
+          };
+        }
+        
+        // Override document.createElement to prevent preload link creation
+        const originalCreateElement = document.createElement;
+        document.createElement = function(tagName) {
+          const element = originalCreateElement.call(this, tagName);
+          if (tagName.toLowerCase() === 'link') {
+            const originalSetAttribute = element.setAttribute;
+            element.setAttribute = function(name, value) {
+              if (name === 'rel' && (value === 'preload' || value === 'modulepreload')) {
+                console.log('Preventing preload link creation:', value);
+                return; // Don't set the attribute
+              }
+              return originalSetAttribute.call(this, name, value);
+            };
+          }
+          return element;
+        };
+        
+        // Remove any existing preload links
+        const removePreloadLinks = () => {
+          document.querySelectorAll('link[rel="preload"], link[rel="modulepreload"]').forEach(link => {
+            console.log('Removing existing preload link:', link.href);
+            link.remove();
+          });
+        };
+        
+        // Remove immediately and on DOM ready
+        removePreloadLinks();
+        document.addEventListener('DOMContentLoaded', removePreloadLinks);
+        
+        // Watch for new preload links being added and remove them
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+              if (node.nodeType === 1 && node.tagName === 'LINK') {
+                if (node.rel === 'preload' || node.rel === 'modulepreload') {
+                  console.log('Intercepting and removing preload link:', node.href);
+                  node.remove();
+                }
+              }
+            });
+          });
+        });
+        observer.observe(document.head, { childList: true, subtree: true });
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+      
+      if (window.performance) {
+        window.performance.mark('app-init-start');
+      }
+    </script>
+  </body>
+</html>
